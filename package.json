@@ -1,0 +1,32 @@
+{
+    "name": "@sbn/portal-ui",
+    "version": "1.0.0",
+    "description": "Portal UI",
+    "scripts": {
+        "eslint": "eslint --format codeframe .",
+        "eslint-fix": "eslint --fix --format codeframe .",
+        "yamllint": "yamllint .",
+        "lint": "npm run eslint && npm run yamllint",
+        "start": "node main.js",
+        "deploy": "./deploy.sh"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/matushorvath/aoc-redirect"
+    },
+    "author": "Matus Horvath <matus.horvath@gmail.com>",
+    "license": "UNLICENSED",
+    "files": [
+        "*.js",
+        "template.yml"
+    ],
+    "dependencies": {
+        "aws-serverless-express": "^3.3.8",
+        "express": "^4.17.1",
+        "nocache": "^2.1.0"
+    },
+    "devDependencies": {
+        "aws-sdk": "^2.802.0",
+        "eslint": "^7.14.0"
+    }
+}

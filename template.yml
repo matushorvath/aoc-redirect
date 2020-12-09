@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: AoC Redirector
+
+Parameters:
+  Bucket:
+    Type: String
+    Description: Package bucket name
+  Package:
+    Type: String
+    Description: Package file name
+  Version:
+    Type: String
+    Description: Package version
+
+Resources:
+  RedirectorUiApi:
+    DependsOn:
+      - RedirectorUiFunction
+    Type: AWS::Serverless::Api
+    Properties:
+      DefinitionBody:
+        openapi: "3.0.1"
+        info:
+          title: !Sub "${AWS::StackName}_Redirector"
+          version: !Ref Version
+        paths:
+          /:
+            options:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                type: "mock"
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                contentHandling: "CONVERT_TO_TEXT"
+                type: "aws_proxy"
+          /{proxy+}:
+            options:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                type: "mock"
+            x-amazon-apigateway-any-method:
+              parameters:
+                - name: "proxy"
+                  in: "path"
+                  required: true
+                  schema:
+                    type: "string"
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                contentHandling: "CONVERT_TO_TEXT"
+                type: "aws_proxy"
+        x-amazon-apigateway-binary-media-types:
+          - "*/*"
+        components:
+          schemas:
+            Empty:
+              title: "Empty Schema"
+              type: "object"
+      StageName: Prod
+
+  RedirectorUiFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}_RedirectorUi"
+      Description: !Ref Version
+      CodeUri:
+        Bucket: !Ref Bucket
+        Key: !Ref Package
+      Handler: main.handler
+      Runtime: nodejs12.x
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+        - AWSXrayWriteOnlyAccess
+      Environment:
+        Variables:
+          IN_LAMBDA: true
+          DEBUG: express:*
+
+  RedirectorUiIntegrationPerms:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - RedirectorUiFunction
+      - RedirectorUiApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Sub "${AWS::StackName}_RedirectorUi"
+      Principal: apigateway.amazonaws.com
