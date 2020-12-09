@@ -9,7 +9,7 @@ bucket=cf.009116496185.us-east-1
 
 # TODO npm i --prod
 
-zip -rq $package *
+zip -rq $package $(<package.json jq -re .files[],.deployFiles[])
 
 aws s3 cp \
     --profile private --region us-east-1 \

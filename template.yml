@@ -28,7 +28,9 @@ Resources:
           /:
             x-amazon-apigateway-any-method:
               x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations
+                uri: !Sub
+                  "arn:aws:apigateway:${AWS::Region}:lambda:path\
+                  /2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations"
                 responses:
                   default:
                     statusCode: "200"
@@ -45,7 +47,9 @@ Resources:
                   schema:
                     type: "string"
               x-amazon-apigateway-integration:
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations
+                uri: !Sub
+                  "arn:aws:apigateway:${AWS::Region}:lambda:path\
+                  /2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations"
                 responses:
                   default:
                     statusCode: "200"

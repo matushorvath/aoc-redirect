@@ -21,6 +21,11 @@
         "*.js",
         "template.yml"
     ],
+    "deployFiles": [
+        "package.json",
+        "package-lock.json",
+        "node_modules/"
+    ],
     "dependencies": {
         "aws-serverless-express": "^3.3.8",
         "express": "^4.17.1",
