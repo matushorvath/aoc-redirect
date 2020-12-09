@@ -3,10 +3,13 @@
 set -e
 
 version=$(<package.json jq -re .version)
-package=aoc-redirect-$version.zip
+uuid=$(uuidgen -r | tr -d -)
+package=aoc-redirect-$version-$uuid.zip
 bucket=cf.009116496185.us-east-1
 
-zip $package *
+# TODO npm i --prod
+
+zip -rq $package *
 
 aws s3 cp \
     --profile private --region us-east-1 \
