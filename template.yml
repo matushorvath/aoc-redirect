@@ -64,6 +64,7 @@ Resources:
   RedirectorUiFunction:
     Type: AWS::Serverless::Function
     DependsOn:
+      - RedirectorUiTable
     Properties:
       FunctionName: !Sub "${AWS::StackName}_RedirectorUi"
       Description: !Ref Version
@@ -75,9 +76,11 @@ Resources:
       Policies:
         - AWSLambdaVPCAccessExecutionRole
         - AWSXrayWriteOnlyAccess
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RedirectorUiTable
       Environment:
         Variables:
-          IN_LAMBDA: true
+          AWS_SDK_LOAD_CONFIG: 1
           DEBUG: express:*
 
   RedirectorUiIntegrationPerms:
@@ -89,3 +92,19 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Sub "${AWS::StackName}_RedirectorUi"
       Principal: apigateway.amazonaws.com
+
+  RedirectorUiTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: name
+          AttributeType: S
+        - AttributeName: uuid
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: name
+          KeyType: HASH
+        - AttributeName: uuid
+          KeyType: RANGE
+      TableName: aoc-redirect

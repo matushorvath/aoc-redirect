@@ -8,7 +8,7 @@
         "yamllint": "yamllint .",
         "lint": "npm run eslint && npm run yamllint",
         "test": "npm run lint",
-        "start": "node main.js",
+        "start": "AWS_SDK_LOAD_CONFIG=1 node main.js",
         "deploy": "./deploy.sh"
     },
     "repository": {
@@ -29,7 +29,8 @@
     "dependencies": {
         "aws-serverless-express": "^3.3.8",
         "express": "^4.17.1",
-        "nocache": "^2.1.0"
+        "nocache": "^2.1.0",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "aws-sdk": "^2.802.0",
