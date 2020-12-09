@@ -23,3 +23,5 @@ aws cloudformation deploy \
         Bucket=$bucket \
         Package=$package \
         Version=$version
+
+rm -f $package

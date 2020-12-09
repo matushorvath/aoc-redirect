@@ -12,6 +12,7 @@ const app = express();
 
 app.use(nocache());
 app.get('/', redirect);
+app.get('/abc', (req, res) => res.send("hello!"));
 
 if (process.env.IN_LAMBDA === 'true') {
     const server = ase.createServer(app, () => console.log('Server is listening'));
