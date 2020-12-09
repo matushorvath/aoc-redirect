@@ -7,8 +7,6 @@ uuid=$(uuidgen -r | tr -d -)
 package=aoc-redirect-$version-$uuid.zip
 bucket=cf.009116496185.us-east-1
 
-# TODO npm i --prod
-
 zip -rq $package $(<package.json jq -re .files[],.deployFiles[])
 
 aws s3 cp \
