@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Test and Deploy
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ env:
   TERM: xterm-color
 
 jobs:
-  build:
+  test:
     name: Build and Test
     runs-on: ubuntu-20.04
 
@@ -31,6 +31,7 @@ jobs:
   deploy:
     name: Deploy to AWS
     runs-on: ubuntu-20.04
+    needs: test
     if: github.ref == 'refs/heads/master'
 
     steps:
