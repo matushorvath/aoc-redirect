@@ -22,7 +22,7 @@ app.get('/:year/day/:day', async (req, res) => {
         Item: {
             "day": { N: req.params.day },
             "name": { S: req.query.name },
-            "time": { S: new Date().toISOString() },
+            "ts": { N: `${Math.floor(Date.now() / 1000)}` },
             "uuid": { S: uuidv4() },
             "year": { N: req.params.year }
         },
@@ -56,7 +56,16 @@ app.get('/data', async (req, res) => {
         if (!json[item.year.N][item.day.N][item.name.S]) {
             json[item.year.N][item.day.N][item.name.S] = [];
         }
-        json[item.year.N][item.day.N][item.name.S].push(item.time.S);
+
+        // Support ISO format strings in DB
+        let ts;
+        if (item.time) {
+            ts = Math.floor(new Date(item.time.S).valueOf() / 1000);
+        } else {
+            ts = parseInt(item.ts.N, 10);
+        }
+
+        json[item.year.N][item.day.N][item.name.S].push(ts);
     }
 
     for (const y of Object.keys(json)) {
