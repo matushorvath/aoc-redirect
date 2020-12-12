@@ -11,7 +11,11 @@ app.use(nocache());
 const db = new aws.DynamoDB({ apiVersion: '2012-08-10' });
 const dbTable = 'aoc-redirect';
 
-app.get('/:year/day/:day', async (req, res) => {
+const usage = (req) => {
+    return `usage: https://${req.hostname}/2020/day/8?part=1&name=dedojozef`;
+};
+
+const getYearDayV1 = async (req, res) => {
     if (!req.query.name) {
         res.status(400);
         res.send(`usage: https://${req.hostname}/2020/day/8?name=dedojozef`);
@@ -24,16 +28,54 @@ app.get('/:year/day/:day', async (req, res) => {
             "name": { S: req.query.name },
             "ts": { N: `${Math.floor(Date.now() / 1000)}` },
             "uuid": { S: uuidv4() },
-            "year": { N: req.params.year }
+            "year": { N: req.params.year },
+            "part": { N: '1' }
         },
         TableName: dbTable
     };
     await db.putItem(params).promise();
 
     res.redirect(`https://adventofcode.com/${req.params.year}/day/${req.params.day}`);
-});
+};
 
-app.get('/data', async (req, res) => {
+const getYearDayV2 = async (req, res) => {
+    if (!req.query.name) {
+        res.status(400).send(usage(req));
+        return;
+    }
+
+    if (!req.query.part || (req.query.part !== '1' && req.query.part !== '2')) {
+        res.status(400).send(usage(req));
+        return;
+    }
+
+    const params = {
+        Item: {
+            "day": { N: req.params.day },
+            "name": { S: req.query.name },
+            "ts": { N: `${Math.floor(Date.now() / 1000)}` },
+            "uuid": { S: uuidv4() },
+            "year": { N: req.params.year },
+            "part": { N: req.query.part }
+        },
+        TableName: dbTable
+    };
+    await db.putItem(params).promise();
+
+    res.status(200).send('OK');
+};
+
+const getYearDay = async (req, res) => {
+    if (req.query.part) {
+        return await getYearDayV1(req, res);
+    } else {
+        return await getYearDayV2(req, res);
+    }
+};
+
+app.get('/:year/day/:day', getYearDay);
+
+const getDataV1 = async (req, res) => {
     const params = {
         TableName: dbTable
     };
@@ -57,14 +99,7 @@ app.get('/data', async (req, res) => {
             json[item.year.N][item.day.N][item.name.S] = [];
         }
 
-        // Support ISO format strings in DB
-        let ts;
-        if (item.time) {
-            ts = Math.floor(new Date(item.time.S).valueOf() / 1000);
-        } else {
-            ts = parseInt(item.ts.N, 10);
-        }
-
+        const ts = parseInt(item.ts.N, 10);
         json[item.year.N][item.day.N][item.name.S].push(ts);
     }
 
@@ -77,6 +112,48 @@ app.get('/data', async (req, res) => {
     }
 
     res.send(json);
+};
+
+const getDataV2 = async (req, res) => {
+    const params = {
+        TableName: dbTable
+    };
+    const data = await db.scan(params).promise();
+    if (data.LastEvaluatedKey && data.LastEvaluatedKey !== '') {
+        res.status(500);
+        res.send('too many records in db, someone will have to implement paging');
+        return;
+    }
+
+    const json = {};
+
+    for (const item of data.Items) {
+        if (!json[item.year.N]) {
+            json[item.year.N] = {};
+        }
+        if (!json[item.year.N][item.day.N]) {
+            json[item.year.N][item.day.N] = {};
+        }
+        if (!json[item.year.N][item.day.N][item.part.N]) {
+            json[item.year.N][item.day.N][item.part.N] = {};
+        }
+        if (!json[item.year.N][item.day.N][item.part.N][item.name.S]) {
+            json[item.year.N][item.day.N][item.part.N][item.name.S] = [];
+        }
+
+        const ts = parseInt(item.ts.N, 10);
+
+        json[item.year.N][item.day.N][item.part.N][item.name.S].push(ts);
+    }
+
+    res.send(json);
+};
+
+app.get('/data', getDataV1);
+app.get('/v2/data', getDataV2);
+
+app.get('/ping', async (req, res) => {
+    res.status(200).send('pong');
 });
 
 if (process.env.AWS_EXECUTION_ENV) {

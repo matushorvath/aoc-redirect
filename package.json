@@ -18,7 +18,7 @@
     "author": "Matus Horvath <matus.horvath@gmail.com>",
     "license": "UNLICENSED",
     "files": [
-        "*.js",
+        "main.js",
         "template.yml"
     ],
     "deployFiles": [
