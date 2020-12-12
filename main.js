@@ -42,7 +42,7 @@ const getYearDay = async (db, req, res) => {
     if (!req.query.part) {
         res.redirect(`https://adventofcode.com/${req.params.year}/day/${req.params.day}`);
     } else {
-        res.status(200).send('OK');
+        res.send('OK');
     }
 };
 
@@ -54,9 +54,7 @@ const getDataV1 = async (db, req, res) => {
     };
     const data = await db.scan(params).promise();
     if (data.LastEvaluatedKey && data.LastEvaluatedKey !== '') {
-        res.status(500);
-        res.send('too many records in db, someone will have to implement paging');
-        return;
+        throw new Error('too many records in db, someone will have to implement paging');
     }
 
     const json = {};
@@ -79,7 +77,7 @@ const getDataV1 = async (db, req, res) => {
     for (const y of Object.keys(json)) {
         for (const d of Object.keys(json[y])) {
             for (const n of Object.keys(json[y][d])) {
-                json[y][d][n].sort();
+                json[y][d][n].sort((a, b) => a - b);
             }
         }
     }
@@ -95,9 +93,7 @@ const getDataV2 = async (db, req, res) => {
     };
     const data = await db.scan(params).promise();
     if (data.LastEvaluatedKey && data.LastEvaluatedKey !== '') {
-        res.status(500);
-        res.send('too many records in db, someone will have to implement paging');
-        return;
+        throw new Error('too many records in db, someone will have to implement paging');
     }
 
     const json = {};

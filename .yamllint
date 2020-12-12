@@ -1,6 +1,7 @@
 extends: relaxed
 
 ignore: |
+  coverage/
   node_modules/
 
 rules:
