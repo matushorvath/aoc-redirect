@@ -11,7 +11,11 @@ const usage = (req) => {
 };
 
 const getYearDay = async (db, req, res) => {
-    if (!req.query.name) {
+    if (!req.params || !req.params.day || !req.params.year) {
+        throw new Error('invalid request params');
+    }
+
+    if (!req.query || !req.query.name) {
         res.status(400).send(usage(req));
         return;
     }
