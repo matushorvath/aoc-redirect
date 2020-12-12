@@ -4,23 +4,23 @@ const aws = require('aws-sdk');
 const nocache = require('nocache');
 const { v4: uuidv4 } = require('uuid');
 
-const app = express();
-
-app.use(nocache());
-
-const db = new aws.DynamoDB({ apiVersion: '2012-08-10' });
 const dbTable = 'aoc-redirect';
 
 const usage = (req) => {
     return `usage: https://${req.hostname}/2020/day/8?part=1&name=dedojozef`;
 };
 
-const getYearDayV1 = async (req, res) => {
+const getYearDay = async (db, req, res) => {
     if (!req.query.name) {
-        res.status(400);
-        res.send(`usage: https://${req.hostname}/2020/day/8?name=dedojozef`);
+        res.status(400).send(usage(req));
         return;
     }
+
+    if (req.query.part && req.query.part !== '1' && req.query.part !== '2') {
+        res.status(400).send(usage(req));
+        return;
+    }
+    const part = req.query.part || '1';
 
     const params = {
         Item: {
@@ -29,53 +29,20 @@ const getYearDayV1 = async (req, res) => {
             "ts": { N: `${Math.floor(Date.now() / 1000)}` },
             "uuid": { S: uuidv4() },
             "year": { N: req.params.year },
-            "part": { N: '1' }
+            "part": { N: part }
         },
         TableName: dbTable
     };
     await db.putItem(params).promise();
 
-    res.redirect(`https://adventofcode.com/${req.params.year}/day/${req.params.day}`);
-};
-
-const getYearDayV2 = async (req, res) => {
-    if (!req.query.name) {
-        res.status(400).send(usage(req));
-        return;
-    }
-
-    if (!req.query.part || (req.query.part !== '1' && req.query.part !== '2')) {
-        res.status(400).send(usage(req));
-        return;
-    }
-
-    const params = {
-        Item: {
-            "day": { N: req.params.day },
-            "name": { S: req.query.name },
-            "ts": { N: `${Math.floor(Date.now() / 1000)}` },
-            "uuid": { S: uuidv4() },
-            "year": { N: req.params.year },
-            "part": { N: req.query.part }
-        },
-        TableName: dbTable
-    };
-    await db.putItem(params).promise();
-
-    res.status(200).send('OK');
-};
-
-const getYearDay = async (req, res) => {
-    if (req.query.part) {
-        return await getYearDayV1(req, res);
+    if (!req.query.part) {
+        res.redirect(`https://adventofcode.com/${req.params.year}/day/${req.params.day}`);
     } else {
-        return await getYearDayV2(req, res);
+        res.status(200).send('OK');
     }
 };
 
-app.get('/:year/day/:day', getYearDay);
-
-const getDataV1 = async (req, res) => {
+const getDataV1 = async (db, req, res) => {
     const params = {
         TableName: dbTable
     };
@@ -114,7 +81,7 @@ const getDataV1 = async (req, res) => {
     res.send(json);
 };
 
-const getDataV2 = async (req, res) => {
+const getDataV2 = async (db, req, res) => {
     const params = {
         TableName: dbTable
     };
@@ -149,27 +116,35 @@ const getDataV2 = async (req, res) => {
     res.send(json);
 };
 
-app.get('/data', getDataV1);
-app.get('/v2/data', getDataV2);
+const init = () => {
+    const app = express();
+    const db = new aws.DynamoDB({ apiVersion: '2012-08-10' });
 
-app.get('/ping', async (req, res) => {
-    res.status(200).send('pong');
-});
+    app.use(nocache());
 
-if (process.env.AWS_EXECUTION_ENV) {
-    const server = ase.createServer(app, () => console.log('Server is listening'));
+    app.get('/:year/day/:day', async (req, res) => getYearDay(db, req, res));
+    app.get('/data', async (req, res) => getDataV1(db, req, res));
+    app.get('/v2/data', async (req, res) => getDataV2(db, req, res));
 
-    exports.handler = async (event, context) => {
-        try {
-            return await ase.proxy(server, event, context, 'PROMISE').promise;
-        } catch (error) {
-            console.debug('Internal server error:', error);
-            return {
-                statusCode: 500,
-                body: 'Internal server error'
-            };
-        }
-    };
-} else {
-    app.listen(5000, () => console.log('Listening on http://localhost:5000/'));
-}
+    app.get('/ping', async (req, res) => { res.status(200).send('pong'); });
+
+    if (process.env.AWS_EXECUTION_ENV) {
+        const server = ase.createServer(app, () => console.log('Server is listening'));
+
+        exports.handler = async (event, context) => {
+            try {
+                return await ase.proxy(server, event, context, 'PROMISE').promise;
+            } catch (error) {
+                console.debug('Internal server error:', error);
+                return {
+                    statusCode: 500,
+                    body: 'Internal server error'
+                };
+            }
+        };
+    } else {
+        app.listen(5000, () => console.log('Listening on http://localhost:5000/'));
+    }
+};
+
+init();
