@@ -417,8 +417,8 @@ describe('getDataV2', () => {
         expect(res.send).toBeCalledWith({
             1848: {
                 42: {
-                    2: {
-                        'dEdOjOzEf': [975318642]
+                    'dEdOjOzEf': {
+                        2: [975318642]
                     }
                 }
             }
@@ -452,15 +452,15 @@ describe('getDataV2', () => {
         expect(res.send).toBeCalledWith({
             1848: {
                 45: {
-                    1: {
-                        'fErOmRkViCkA': [951840]
+                    'fErOmRkViCkA': {
+                        1: [951840]
                     }
                 }
             },
             1843: {
                 42: {
-                    2: {
-                        'dEdOjOzEf': [975318642]
+                    'dEdOjOzEf': {
+                        2: [975318642]
                     }
                 }
             }
@@ -494,20 +494,20 @@ describe('getDataV2', () => {
         expect(res.send).toBeCalledWith({
             1848: {
                 45: {
-                    1: {
-                        'fErOmRkViCkA': [951840]
+                    'fErOmRkViCkA': {
+                        1: [951840]
                     }
                 },
                 42: {
-                    2: {
-                        'dEdOjOzEf': [975318642]
+                    'dEdOjOzEf': {
+                        2: [975318642]
                     }
                 }
             }
         });
     });
 
-    test('works with two parts in one day', async () => {
+    test('works with two people in one day', async () => {
         dbScanPromise.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
@@ -534,23 +534,59 @@ describe('getDataV2', () => {
         expect(res.send).toBeCalledWith({
             1848: {
                 42: {
-                    1: {
-                        'fErOmRkViCkA': [951840]
+                    'fErOmRkViCkA': {
+                        1: [951840]
                     },
-                    2: {
-                        'dEdOjOzEf': [975318642]
+                    'dEdOjOzEf': {
+                        2: [975318642]
                     }
                 }
             }
         });
     });
 
-    test('works with two people in one part', async () => {
+    test('works with two parts for one person', async () => {
         dbScanPromise.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
-                name: { S: 'fErOmRkViCkA' },
+                name: { S: 'dEdOjOzEf' },
+                uuid: { S: 'gFeD9876' },
+                ts: { N: '951840' },
+                part: { N: '1' }
+            }, {
+                year: { N: '1848' },
+                day: { N: '42' },
+                name: { S: 'dEdOjOzEf' },
+                uuid: { S: 'aBcD1234' },
+                ts: { N: '975318642' },
+                part: { N: '2' }
+            }]
+        });
+
+        await expect(main.getDataV2(db, undefined, res)).resolves.toBe(undefined);
+
+        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dbScanPromise).toBeCalled();
+
+        expect(res.send).toBeCalledWith({
+            1848: {
+                42: {
+                    'dEdOjOzEf': {
+                        1: [951840],
+                        2: [975318642]
+                    }
+                }
+            }
+        });
+    });
+
+    test('works with two times for one part', async () => {
+        dbScanPromise.mockReturnValueOnce({
+            Items: [{
+                year: { N: '1848' },
+                day: { N: '42' },
+                name: { S: 'dEdOjOzEf' },
                 uuid: { S: 'gFeD9876' },
                 ts: { N: '951840' },
                 part: { N: '2' }
@@ -572,45 +608,8 @@ describe('getDataV2', () => {
         expect(res.send).toBeCalledWith({
             1848: {
                 42: {
-                    2: {
-                        'fErOmRkViCkA': [951840],
-                        'dEdOjOzEf': [975318642]
-                    }
-                }
-            }
-        });
-    });
-
-
-    test('works with two times for one person', async () => {
-        dbScanPromise.mockReturnValueOnce({
-            Items: [{
-                year: { N: '1848' },
-                day: { N: '42' },
-                name: { S: 'dEdOjOzEf' },
-                uuid: { S: 'gFeD9876' },
-                ts: { N: '951840' },
-                part: { N: '2' }
-            }, {
-                year: { N: '1848' },
-                day: { N: '42' },
-                name: { S: 'dEdOjOzEf' },
-                uuid: { S: 'aBcD1234' },
-                ts: { N: '975318642' },
-                part: { N: '2' }
-            }]
-        });
-
-        await expect(main.getDataV2(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
-
-        expect(res.send).toBeCalledWith({
-            1848: {
-                42: {
-                    2: {
-                        'dEdOjOzEf': [951840, 975318642]
+                    'dEdOjOzEf': {
+                        2: [951840, 975318642]
                     }
                 }
             }
@@ -644,8 +643,8 @@ describe('getDataV2', () => {
         expect(res.send).toBeCalledWith({
             1848: {
                 42: {
-                    1: {
-                        'dEdOjOzEf': [981840, 975318642]
+                    'dEdOjOzEf': {
+                        1: [981840, 975318642]
                     }
                 }
             }

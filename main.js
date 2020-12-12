@@ -105,16 +105,15 @@ const getDataV2 = async (db, req, res) => {
         if (!json[item.year.N][item.day.N]) {
             json[item.year.N][item.day.N] = {};
         }
-        if (!json[item.year.N][item.day.N][item.part.N]) {
-            json[item.year.N][item.day.N][item.part.N] = {};
+        if (!json[item.year.N][item.day.N][item.name.S]) {
+            json[item.year.N][item.day.N][item.name.S] = {};
         }
-        if (!json[item.year.N][item.day.N][item.part.N][item.name.S]) {
-            json[item.year.N][item.day.N][item.part.N][item.name.S] = [];
+        if (!json[item.year.N][item.day.N][item.name.S][item.part.N]) {
+            json[item.year.N][item.day.N][item.name.S][item.part.N] = [];
         }
 
         const ts = parseInt(item.ts.N, 10);
-
-        json[item.year.N][item.day.N][item.part.N][item.name.S].push(ts);
+        json[item.year.N][item.day.N][item.name.S][item.part.N].push(ts);
     }
 
     res.send(json);
