@@ -42,6 +42,8 @@ const getYearDay = async (db, req, res) => {
     }
 };
 
+exports.getYearDay = getYearDay;
+
 const getDataV1 = async (db, req, res) => {
     const params = {
         TableName: dbTable
@@ -81,6 +83,8 @@ const getDataV1 = async (db, req, res) => {
     res.send(json);
 };
 
+exports.getDataV1 = getDataV1;
+
 const getDataV2 = async (db, req, res) => {
     const params = {
         TableName: dbTable
@@ -116,6 +120,8 @@ const getDataV2 = async (db, req, res) => {
     res.send(json);
 };
 
+exports.getDataV2 = getDataV2;
+
 const init = () => {
     const app = express();
     const db = new aws.DynamoDB({ apiVersion: '2012-08-10' });
@@ -147,4 +153,6 @@ const init = () => {
     }
 };
 
-init();
+if (!process.env.JEST_WORKER_ID) {
+    init();
+}
