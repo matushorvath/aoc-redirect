@@ -48,46 +48,7 @@ const getYearDay = async (db, req, res) => {
 
 exports.getYearDay = getYearDay;
 
-const getDataV1 = async (db, req, res) => {
-    const params = {
-        TableName: dbTable
-    };
-    const data = await db.scan(params).promise();
-    if (data.LastEvaluatedKey && data.LastEvaluatedKey !== '') {
-        throw new Error('too many records in db, someone will have to implement paging');
-    }
-
-    const json = {};
-
-    for (const item of data.Items) {
-        if (!json[item.year.N]) {
-            json[item.year.N] = {};
-        }
-        if (!json[item.year.N][item.day.N]) {
-            json[item.year.N][item.day.N] = {};
-        }
-        if (!json[item.year.N][item.day.N][item.name.S]) {
-            json[item.year.N][item.day.N][item.name.S] = [];
-        }
-
-        const ts = parseInt(item.ts.N, 10);
-        json[item.year.N][item.day.N][item.name.S].push(ts);
-    }
-
-    for (const y of Object.keys(json)) {
-        for (const d of Object.keys(json[y])) {
-            for (const n of Object.keys(json[y][d])) {
-                json[y][d][n].sort((a, b) => a - b);
-            }
-        }
-    }
-
-    res.send(json);
-};
-
-exports.getDataV1 = getDataV1;
-
-const getDataV2 = async (db, req, res) => {
+const getData = async (db, req, res) => {
     const params = {
         TableName: dbTable
     };
@@ -119,7 +80,7 @@ const getDataV2 = async (db, req, res) => {
     res.send(json);
 };
 
-exports.getDataV2 = getDataV2;
+exports.getData = getData;
 
 const init = () => {
     const app = express();
@@ -128,9 +89,7 @@ const init = () => {
     app.use(nocache());
 
     app.get('/:year/day/:day', async (req, res) => getYearDay(db, req, res));
-    app.get('/data', async (req, res) => getDataV1(db, req, res));
-    app.get('/v2/data', async (req, res) => getDataV2(db, req, res));
-
+    app.get('/data', async (req, res) => getData(db, req, res));
     app.get('/ping', async (req, res) => { res.status(200).send('pong'); });
 
     if (process.env.AWS_EXECUTION_ENV) {
