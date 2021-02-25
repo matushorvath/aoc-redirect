@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
 
 env:
   FORCE_COLOR: 1
@@ -32,7 +32,7 @@ jobs:
     name: Deploy to AWS
     runs-on: ubuntu-20.04
     needs: test
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v1
