@@ -5,39 +5,13 @@ const readAllDataFromTable = async ({ region, table }) => {
   AWS.config.update({ region })
   const db = new AWS.DynamoDB.DocumentClient()
 
-  return await new Promise((resolve, reject) => {
-    db.scan(
-      {
-        TableName: table,
-      },
-      (err, data) => {
-        if (err) {
-          reject('Unable to scan the table.')
-        } else {
-          resolve(data.Items)
-        }
-      }
-    )
-  })
+  const data = await db.scan({ TableName: table }).promise();
+  return data.Items;
 }
 
 // Write one row of data to the new table
 const writeRowToTable = async (db, table, row) => {
-  return await new Promise((resolve, reject) => {
-    db.put(
-      {
-        TableName: table,
-        Item: row,
-      },
-      err => {
-        if (err) {
-          reject()
-        } else {
-          resolve()
-        }
-      }
-    )
-  })
+  await db.put({ TableName: table, Item: row }).promise();
 }
 
 // Write all the data to the new table
@@ -51,34 +25,33 @@ const writeDataToTable = async ({ region, table, data }) => {
 
   await Promise.all(
     data.map(async item => {
-      return new Promise(async resolve => {
-        try {
-          await writeRowToTable(db, table, item)
-          successfulWrites++
-        } catch (e) {
-          // If something fails, log it
-          console.log('error', e)
-        }
-        resolve()
-      })
+      await writeRowToTable(db, table, item)
+      successfulWrites++
+      console.log(`wrote one`);
     })
-  )
+  );
 
   console.log(`wrote ${successfulWrites} of ${data.length} rows to database`)
 }
 
 // Run the script
-;(async function() {
-  // Store all the data in memory to write later
+const main = async () => {
+  console.log(`running`);
+
   const data = await readAllDataFromTable({
     region: 'us-east-1',
-    table: 'aoc-redirect',
+    table: 'aoc-redirect'
   })
 
-  // Write the saved data to the new table
+  console.log(`read all`);
+
   await writeDataToTable({
     region: 'eu-central-1',
     table: 'aoc-redirect',
-    data,
+    data
   })
-})()
+};
+
+main()
+  .then(() => console.log('done'))
+  .catch(error => console.log(error));
