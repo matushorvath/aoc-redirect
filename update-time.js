@@ -1,6 +1,6 @@
-const aws = require('aws-sdk');
+const { DynamoDB } = require("@aws-sdk/client-dynamodb");
 
-const db = new aws.DynamoDB({ apiVersion: '2012-08-10' });
+const db = new DynamoDB({ apiVersion: '2012-08-10' });
 const dbTable = 'aoc-redirect';
 
 const updateTime = async () => {
@@ -8,7 +8,7 @@ const updateTime = async () => {
         FilterExpression: 'attribute_not_exists(ts)',
         TableName: dbTable
     };
-    const data = await db.scan(scanParams).promise();
+    const data = await db.scan(scanParams);
 
     console.log(JSON.stringify(data));
 
@@ -27,7 +27,7 @@ const updateTime = async () => {
 
         console.log(JSON.stringify(updateParams));
 
-        const out = await db.updateItem(updateParams).promise();
+        const out = await db.updateItem(updateParams);
         console.log(out);
     }
 };

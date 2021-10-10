@@ -1,6 +1,6 @@
 const express = require('express');
 const ase = require('aws-serverless-express');
-const aws = require('aws-sdk');
+const { DynamoDB } = require("@aws-sdk/client-dynamodb");
 const nocache = require('nocache');
 const { v4: uuidv4 } = require('uuid');
 
@@ -37,7 +37,7 @@ const getYearDay = async (db, req, res) => {
         },
         TableName: dbTable
     };
-    await db.putItem(params).promise();
+    await db.putItem(params);
 
     if (!req.query.part) {
         res.redirect(`https://adventofcode.com/${req.params.year}/day/${req.params.day}`);
@@ -52,7 +52,7 @@ const getData = async (db, req, res) => {
     const params = {
         TableName: dbTable
     };
-    const data = await db.scan(params).promise();
+    const data = await db.scan(params);
     if (data.LastEvaluatedKey && data.LastEvaluatedKey !== '') {
         throw new Error('too many records in db, someone will have to implement paging');
     }
@@ -84,7 +84,7 @@ exports.getData = getData;
 
 const init = () => {
     const app = express();
-    const db = new aws.DynamoDB({ apiVersion: '2012-08-10' });
+    const db = new DynamoDB({ apiVersion: '2012-08-10' });
 
     app.use(nocache());
 
