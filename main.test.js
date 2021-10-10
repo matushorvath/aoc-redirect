@@ -10,17 +10,15 @@ describe('getYearDay', () => {
     res.send.mockReturnValue(res);
     res.status.mockReturnValue(res);
 
-    const dbPutItemPromise = jest.fn();
     const db = {
-        putItem: jest.fn().mockReturnValue({ promise: dbPutItemPromise })
+        putItem: jest.fn()
     };
 
     beforeEach(() => {
         res.redirect.mockClear();
         res.send.mockClear();
         res.status.mockClear();
-        db.putItem.mockClear();
-        dbPutItemPromise.mockReset();
+        db.putItem.mockReset();
     });
 
     test.each([
@@ -74,7 +72,6 @@ describe('getYearDay', () => {
             },
             TableName: 'aoc-redirect'
         }));
-        expect(dbPutItemPromise).toBeCalled();
 
         expect(res.redirect).toBeCalledWith(expect.stringMatching(/https:\/\/adventofcode\.com/));
     });
@@ -97,7 +94,6 @@ describe('getYearDay', () => {
             },
             TableName: 'aoc-redirect'
         }));
-        expect(dbPutItemPromise).toBeCalled();
         expect(res.send).toBeCalledWith('OK');
     });
 });
@@ -110,33 +106,29 @@ describe('getData', () => {
     res.send.mockReturnValue(res);
     res.status.mockReturnValue(res);
 
-    const dbScanPromise = jest.fn();
     const db = {
-        scan: jest.fn().mockReturnValue({ promise: dbScanPromise })
+        scan: jest.fn()
     };
 
     beforeEach(() => {
         res.send.mockClear();
         res.status.mockClear();
-        db.scan.mockClear();
-        dbScanPromise.mockReset();
+        db.scan.mockReset();
     });
 
     test('works with no data', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: []
         });
 
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
-
         expect(res.send).toBeCalledWith({});
     });
 
     test('fails with too much data', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             LastEvaluatedKey: 'key'
         });
 
@@ -145,12 +137,11 @@ describe('getData', () => {
         });
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
         expect(res.send).not.toBeCalled();
     });
 
     test('works with one data point', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -164,7 +155,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
@@ -178,7 +168,7 @@ describe('getData', () => {
     });
 
     test('works with two years', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '45' },
@@ -199,7 +189,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
@@ -220,7 +209,7 @@ describe('getData', () => {
     });
 
     test('works with two days in one year', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '45' },
@@ -241,7 +230,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
@@ -260,7 +248,7 @@ describe('getData', () => {
     });
 
     test('works with two people in one day', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -281,7 +269,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
@@ -298,7 +285,7 @@ describe('getData', () => {
     });
 
     test('works with two parts for one person', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -319,7 +306,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
@@ -334,7 +320,7 @@ describe('getData', () => {
     });
 
     test('works with two times for one part', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -355,7 +341,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
@@ -369,7 +354,7 @@ describe('getData', () => {
     });
 
     test('correctly sorts timestamps', async () => {
-        dbScanPromise.mockReturnValueOnce({
+        db.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -390,7 +375,6 @@ describe('getData', () => {
         await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
 
         expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(dbScanPromise).toBeCalled();
 
         expect(res.send).toBeCalledWith({
             1848: {
