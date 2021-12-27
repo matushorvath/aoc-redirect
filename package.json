@@ -3,8 +3,8 @@
     "version": "1.0.0",
     "description": "Advent of Code Score Counter",
     "scripts": {
-        "eslint": "eslint --format codeframe .",
-        "eslint-fix": "eslint --fix --format codeframe .",
+        "eslint": "eslint .",
+        "eslint-fix": "eslint --fix .",
         "yamllint": "yamllint .",
         "lint": "npm run eslint && npm run yamllint",
         "jest": "jest",
@@ -31,15 +31,15 @@
         "node_modules/"
     ],
     "dependencies": {
-        "@aws-sdk/client-dynamodb": "^3.36.0",
+        "@aws-sdk/client-dynamodb": "^3.45.0",
         "aws-serverless-express": "^3.4.0",
-        "eslint-plugin-jest": "^25.0.1",
-        "express": "^4.17.1",
+        "eslint-plugin-jest": "^25.3.2",
+        "express": "^4.17.2",
         "nocache": "^3.0.1",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^7.32.0",
-        "jest": "^27.2.5"
+        "eslint": "^8.5.0",
+        "jest": "^27.4.5"
     }
 }
