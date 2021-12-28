@@ -1,147 +1,48 @@
-const main = require('./main');
+'use strict';
 
-describe('getYearDay', () => {
-    const res = {
-        redirect: jest.fn(),
-        send: jest.fn(),
-        status: jest.fn()
-    };
-    res.redirect.mockReturnValue(res);
-    res.send.mockReturnValue(res);
-    res.status.mockReturnValue(res);
+const { loadTimes, saveTime } = require('../src/times');
 
-    const db = {
-        putItem: jest.fn()
-    };
+const dynamodb = require('@aws-sdk/client-dynamodb');
+jest.mock('@aws-sdk/client-dynamodb');
 
-    beforeEach(() => {
-        res.redirect.mockClear();
-        res.send.mockClear();
-        res.status.mockClear();
-        db.putItem.mockReset();
-    });
+beforeEach(() => {
+    dynamodb.DynamoDB.prototype.putItem.mockReset();
+    dynamodb.DynamoDB.prototype.scan.mockReset();
+});
 
-    test.each([
-        ['missing params', {}],
-        ['empty params', { params: {} }],
-        ['missing day', { params: { year: 1848 } }],
-        ['missing year', { params: { day: 42 } }]
-    ])('fails with %s', async (description, paramsPart) => {
-        const req = {
-            ...paramsPart,
-            query: { name: 'dEdOjOzEf' }
-        };
-        await expect(main.getYearDay(db, req, res)).rejects.toMatchObject({ message: 'invalid request params' });
+describe('saveTime', () => {
+    test('saves a time to database', async () => {
+        await expect(saveTime(1945, 11, 2, 'sOmE oNe', 123456789)).resolves.toBeUndefined();
 
-        expect(res.send).not.toBeCalled();
-        expect(db.putItem).not.toBeCalled();
-    });
-
-    test.each([
-        ['missing query', {}],
-        ['empty query', { query: {} }],
-        ['missing name', { query: { part: '1' } }],
-        ['invalid part', { query: { name: 'dEdOjOzEf', part: '3' } }]
-    ])('fails with %s', async (description, queryPart) => {
-        const req = {
-            params: { day: 42, year: 1848 },
-            ...queryPart
-        };
-        await expect(main.getYearDay(db, req, res)).resolves.toBe(undefined);
-
-        expect(res.status).toBeCalledWith(400);
-        expect(res.send).toBeCalledWith(expect.stringMatching(/^usage:/));
-        expect(db.putItem).not.toBeCalled();
-    });
-
-    test('works with name and default part', async () => {
-        const req = {
-            params: { day: 42, year: 1848 },
-            query: { name: 'dEdOjOzEf' }
-        };
-        await expect(main.getYearDay(db, req, res)).resolves.toBe(undefined);
-
-        expect(db.putItem).toBeCalledWith(expect.objectContaining({
+        expect(dynamodb.DynamoDB.prototype.putItem).toBeCalledWith({
             Item: {
-                "day": { N: req.params.day },
-                "name": { S: req.query.name },
-                "ts": { N: expect.stringMatching(/^\d{10}$/) },
-                "uuid": { S: expect.stringMatching(/^[0-9a-g-]{36}$/) },
-                "year": { N: req.params.year },
-                "part": { N: '1' }
+                year: { N: '1945' },
+                day: { N: '11' },
+                part: { N: '2' },
+                name: { S: 'sOmE oNe' },
+                ts: { N: '123456789' },
+                uuid: { S: expect.stringMatching(/^[0-9a-g-]{36}$/) }
             },
             TableName: 'aoc-redirect'
-        }));
-
-        expect(res.redirect).toBeCalledWith(expect.stringMatching(/https:\/\/adventofcode\.com/));
-    });
-
-    test.each(['1', '2'])('works with name and part %s', async (part) => {
-        const req = {
-            params: { day: 42, year: 1848 },
-            query: { part, name: 'dEdOjOzEf' }
-        };
-        await expect(main.getYearDay(db, req, res)).resolves.toBe(undefined);
-
-        expect(db.putItem).toBeCalledWith(expect.objectContaining({
-            Item: {
-                "day": { N: req.params.day },
-                "name": { S: req.query.name },
-                "ts": { N: expect.stringMatching(/^\d{10}$/) },
-                "uuid": { S: expect.stringMatching(/^[0-9a-g-]{36}$/) },
-                "year": { N: req.params.year },
-                "part": { N: req.query.part }
-            },
-            TableName: 'aoc-redirect'
-        }));
-        expect(res.send).toBeCalledWith('OK');
+        });
     });
 });
 
 describe('getData', () => {
-    const res = {
-        send: jest.fn(),
-        status: jest.fn()
-    };
-    res.send.mockReturnValue(res);
-    res.status.mockReturnValue(res);
-
-    const db = {
-        scan: jest.fn()
-    };
-
-    beforeEach(() => {
-        res.send.mockClear();
-        res.status.mockClear();
-        db.scan.mockReset();
-    });
-
     test('works with no data', async () => {
-        db.scan.mockReturnValueOnce({
-            Items: []
-        });
-
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(res.send).toBeCalledWith({});
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({ Items: [] });
+        await expect(loadTimes()).resolves.toEqual({});
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('fails with too much data', async () => {
-        db.scan.mockReturnValueOnce({
-            LastEvaluatedKey: 'key'
-        });
-
-        await expect(main.getData(db, undefined, res)).rejects.toMatchObject({
-            message: expect.stringMatching(/^too many records/)
-        });
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-        expect(res.send).not.toBeCalled();
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({ LastEvaluatedKey: 'key' });
+        await expect(loadTimes()).rejects.toMatchObject({ message: expect.stringMatching(/^Too many records/) });
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with one data point', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -152,23 +53,15 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
-            1848: {
-                42: {
-                    'dEdOjOzEf': {
-                        2: [975318642]
-                    }
-                }
-            }
+        await expect(loadTimes()).resolves.toEqual({
+            1848: { 42: { 'dEdOjOzEf': { 2: [975318642] } } }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two years', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '45' },
@@ -186,30 +79,16 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
-            1848: {
-                45: {
-                    'fErOmRkViCkA': {
-                        1: [951840]
-                    }
-                }
-            },
-            1843: {
-                42: {
-                    'dEdOjOzEf': {
-                        2: [975318642]
-                    }
-                }
-            }
+        await expect(loadTimes()).resolves.toEqual({
+            1848: { 45: { 'fErOmRkViCkA': { 1: [951840] } } },
+            1843: { 42: { 'dEdOjOzEf': { 2: [975318642] } } }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two days in one year', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '45' },
@@ -227,28 +106,18 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
+        await expect(loadTimes()).resolves.toEqual({
             1848: {
-                45: {
-                    'fErOmRkViCkA': {
-                        1: [951840]
-                    }
-                },
-                42: {
-                    'dEdOjOzEf': {
-                        2: [975318642]
-                    }
-                }
+                45: { 'fErOmRkViCkA': { 1: [951840] } },
+                42: { 'dEdOjOzEf': { 2: [975318642] } }
             }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two people in one day', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -266,26 +135,20 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
+        await expect(loadTimes()).resolves.toEqual({
             1848: {
                 42: {
-                    'fErOmRkViCkA': {
-                        1: [951840]
-                    },
-                    'dEdOjOzEf': {
-                        2: [975318642]
-                    }
+                    'fErOmRkViCkA': { 1: [951840] },
+                    'dEdOjOzEf': { 2: [975318642] }
                 }
             }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two parts for one person', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -303,24 +166,15 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
-            1848: {
-                42: {
-                    'dEdOjOzEf': {
-                        1: [951840],
-                        2: [975318642]
-                    }
-                }
-            }
+        await expect(loadTimes()).resolves.toEqual({
+            1848: { 42: { 'dEdOjOzEf': { 1: [951840], 2: [975318642] } } }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two times for one part', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -338,23 +192,15 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
-            1848: {
-                42: {
-                    'dEdOjOzEf': {
-                        2: [951840, 975318642]
-                    }
-                }
-            }
+        await expect(loadTimes()).resolves.toEqual({
+            1848: { 42: { 'dEdOjOzEf': { 2: [951840, 975318642] } } }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('correctly sorts timestamps', async () => {
-        db.scan.mockReturnValueOnce({
+        dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({
             Items: [{
                 year: { N: '1848' },
                 day: { N: '42' },
@@ -372,18 +218,10 @@ describe('getData', () => {
             }]
         });
 
-        await expect(main.getData(db, undefined, res)).resolves.toBe(undefined);
-
-        expect(db.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
-
-        expect(res.send).toBeCalledWith({
-            1848: {
-                42: {
-                    'dEdOjOzEf': {
-                        1: [981840, 975318642]
-                    }
-                }
-            }
+        await expect(loadTimes()).resolves.toEqual({
+            1848: { 42: { 'dEdOjOzEf': { 1: [981840, 975318642] } } }
         });
+
+        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
     });
 });
