@@ -85,13 +85,22 @@ const processEvent = async (event) => {
     throw new ResultError(403, 'Forbidden');
 };
 
+const shortenResponse = (response) => {
+    if (!response.body || response.body.length < 65) {
+        return response;
+    }
+    return { ...response, body: response.body.slice(0, 65) + '…' };
+};
+
 const handler = async (event) => {
     try {
         console.log('handler: start');
         const result = await processEvent(event);
-        console.log('handler: data response');
 
-        return makeResponse(result);
+        const response = makeResponse(result);
+        console.log('handler: data response', shortenResponse(response));
+
+        return response;
     } catch (error) {
         if (error instanceof ResultError) {
             console.log('handler: error response', error);

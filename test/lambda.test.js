@@ -102,4 +102,14 @@ describe('GET /data', () => {
 
         expect(times.loadTimes).toBeCalledWith();
     });
+
+    test('returns a json that will be shortened in log', async () => {
+        const json = { sOmEdAtA: [...new Array(100)].map((_, i) => i) };
+        times.loadTimes.mockResolvedValueOnce(json);
+
+        const event = { resource: '/data', httpMethod: 'GET' };
+        await expect(handler(event)).resolves.toMatchObject({ statusCode: 200, body: JSON.stringify(json) });
+
+        expect(times.loadTimes).toBeCalledWith();
+    });
 });
