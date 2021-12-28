@@ -89,7 +89,7 @@ const handler = async (event) => {
     try {
         console.log('handler: start');
         const result = await processEvent(event);
-        console.log('handler: data response', result);
+        console.log('handler: data response');
 
         return makeResponse(result);
     } catch (error) {
