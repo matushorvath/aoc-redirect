@@ -1,7 +1,7 @@
 {
     "name": "aoc-redirect",
-    "version": "1.0.0",
-    "description": "Advent of Code Score Counter",
+    "version": "2.0.0",
+    "description": "Advent of Code Tracker",
     "scripts": {
         "eslint": "eslint .",
         "eslint-fix": "eslint --fix .",
@@ -22,7 +22,7 @@
         "node": "^14"
     },
     "files": [
-        "main.js",
+        "src/*.js",
         "template.yml"
     ],
     "deployFiles": [
@@ -32,14 +32,11 @@
     ],
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.45.0",
-        "aws-serverless-express": "^3.4.0",
-        "eslint-plugin-jest": "^25.3.2",
-        "express": "^4.17.2",
-        "nocache": "^3.0.1",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
         "eslint": "^8.5.0",
+        "eslint-plugin-jest": "^25.3.2",
         "jest": "^27.4.5"
     }
 }

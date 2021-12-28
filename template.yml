@@ -14,53 +14,7 @@ Parameters:
     Description: Package version
 
 Resources:
-  RedirectorUiApi:
-    DependsOn:
-      - RedirectorUiFunction
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody:
-        openapi: "3.0.1"
-        info:
-          title: !Sub "${AWS::StackName}_Redirector"
-          version: !Ref Version
-        paths:
-          /:
-            x-amazon-apigateway-any-method:
-              x-amazon-apigateway-integration:
-                uri: !Sub
-                  "arn:aws:apigateway:${AWS::Region}:lambda:path\
-                  /2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations"
-                responses:
-                  default:
-                    statusCode: "200"
-                passthroughBehavior: "when_no_match"
-                httpMethod: "POST"
-                contentHandling: "CONVERT_TO_TEXT"
-                type: "aws_proxy"
-          /{proxy+}:
-            x-amazon-apigateway-any-method:
-              parameters:
-                - name: "proxy"
-                  in: "path"
-                  required: true
-                  schema:
-                    type: "string"
-              x-amazon-apigateway-integration:
-                uri: !Sub
-                  "arn:aws:apigateway:${AWS::Region}:lambda:path\
-                  /2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations"
-                responses:
-                  default:
-                    statusCode: "200"
-                passthroughBehavior: "when_no_match"
-                httpMethod: "POST"
-                contentHandling: "CONVERT_TO_TEXT"
-                type: "aws_proxy"
-        x-amazon-apigateway-binary-media-types:
-          - "*/*"
-      StageName: Prod
-
+  # Function to process HTTP requests
   RedirectorUiFunction:
     Type: AWS::Serverless::Function
     DependsOn:
@@ -71,7 +25,7 @@ Resources:
       CodeUri:
         Bucket: !Ref Bucket
         Key: !Ref Package
-      Handler: main.handler
+      Handler: src/lambda.handler
       Runtime: nodejs14.x
       Policies:
         - AWSLambdaVPCAccessExecutionRole
@@ -81,18 +35,8 @@ Resources:
       Environment:
         Variables:
           AWS_SDK_LOAD_CONFIG: 1
-          DEBUG: express:*
 
-  RedirectorUiIntegrationPerms:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - RedirectorUiFunction
-      - RedirectorUiApi
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Sub "${AWS::StackName}_RedirectorUi"
-      Principal: apigateway.amazonaws.com
-
+  # Dynamo DB table to store all data
   RedirectorUiTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -108,3 +52,52 @@ Resources:
         - AttributeName: uuid
           KeyType: RANGE
       TableName: aoc-redirect
+
+  # API Gateway to handle HTTP API
+  RedirectorUiApi:
+    DependsOn:
+      - RedirectorUiFunction
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionBody:
+        openapi: "3.0.1"
+        info:
+          title: !Sub "${AWS::StackName}_Redirector"
+          version: !Ref Version
+        paths:
+          /{year}/day/{day}:    # TODO this should ideally be POST
+            get:
+              security:
+                - CustomAuthorizer: []
+              x-amazon-apigateway-integration:
+                uri: !Sub
+                  "arn:aws:apigateway:${AWS::Region}:lambda:path\
+                  /2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+          /data:
+            get:
+              security:
+                - CustomAuthorizer: []
+              x-amazon-apigateway-integration:
+                uri: !Sub
+                  "arn:aws:apigateway:${AWS::Region}:lambda:path\
+                  /2015-03-31/functions/${RedirectorUiFunction.Arn}/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+        x-amazon-apigateway-binary-media-types:
+          - "*/*"
+
+  # Permission that allows API Gateway to call RedirectorUiFunction
+  RedirectorUiIntegrationPerms:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - RedirectorUiFunction
+      - RedirectorUiApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Sub "${AWS::StackName}_RedirectorUi"
+      Principal: apigateway.amazonaws.com
