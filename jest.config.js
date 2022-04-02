@@ -1,4 +1,6 @@
+'use strict';
+
 module.exports = {
     collectCoverage: true,
-    testEnvironment: "node"
+    testEnvironment: 'node'
 };

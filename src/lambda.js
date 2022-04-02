@@ -38,10 +38,10 @@ const getYearDay = async (event) => {
         throw new Error('Invalid event parameters');
     }
     if (!name) {
-        throw new ResultError(400, 'Bad Request', explainError(`Missing 'name' query parameter`));
+        throw new ResultError(400, 'Bad Request', explainError("Missing 'name' query parameter"));
     }
     if (part !== '1' && part !== '2') {
-        throw new ResultError(400, 'Bad Request', explainError(`Missing or invalid 'part' query parameter`));
+        throw new ResultError(400, 'Bad Request', explainError("Missing or invalid 'part' query parameter"));
     }
 
     const ts = Math.floor(Date.now() / 1000);
