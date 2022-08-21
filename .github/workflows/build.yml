@@ -32,7 +32,7 @@ jobs:
       #   run: npm config set //registry.npmjs.org/:_authToken=${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Install packages
-        run: npm install
+        run: npm install || cat /home/runner/.npm/_logs/2022-08-21T*
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
