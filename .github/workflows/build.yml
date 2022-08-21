@@ -28,11 +28,13 @@ jobs:
           node-version: 16
           cache: npm
 
-      - name: Login NPM
-        run: npm config set //registry.npmjs.org/:_authToken=${{ secrets.NODE_AUTH_TOKEN }}
+      # - name: Login NPM
+      #   run: npm config set //registry.npmjs.org/:_authToken=${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Install packages
         run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Run tests
         run: npm test
@@ -64,8 +66,8 @@ jobs:
           node-version: 16
           cache: npm
 
-      - name: Login NPM
-        run: npm config set //registry.npmjs.org/:_authToken=${{ secrets.NODE_AUTH_TOKEN }}
+      # - name: Login NPM
+      #   run: npm config set //registry.npmjs.org/:_authToken=${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Install packages
         run: npm install --prod
