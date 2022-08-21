@@ -25,8 +25,13 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 16
           cache: npm
+
+      - name: Login NPM
+        run: npm login
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Install packages
         run: npm install
@@ -58,8 +63,13 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 16
           cache: npm
+
+      - name: Login NPM
+        run: npm login
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Install packages
         run: npm install --prod
