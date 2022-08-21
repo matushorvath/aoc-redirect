@@ -13,7 +13,7 @@ env:
 jobs:
   test:
     name: Build and Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout sources
@@ -25,8 +25,8 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
-          cache: 'npm'
+          node-version: 14
+          cache: npm
 
       - name: Install packages
         run: npm install
@@ -44,7 +44,7 @@ jobs:
 
   deploy:
     name: Deploy to AWS
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: test
     if: github.ref == 'refs/heads/main'
 
@@ -58,8 +58,8 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
-          cache: 'npm'
+          node-version: 14
+          cache: npm
 
       - name: Install packages
         run: npm install --prod
