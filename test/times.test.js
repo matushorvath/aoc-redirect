@@ -14,7 +14,7 @@ describe('saveTime', () => {
     test('saves a time to database', async () => {
         await expect(saveTime(1945, 11, 2, 'sOmE oNe', 123456789)).resolves.toBeUndefined();
 
-        expect(dynamodb.DynamoDB.prototype.putItem).toBeCalledWith({
+        expect(dynamodb.DynamoDB.prototype.putItem).toHaveBeenCalledWith({
             Item: {
                 year: { N: '1945' },
                 day: { N: '11' },
@@ -32,13 +32,13 @@ describe('getData', () => {
     test('works with no data', async () => {
         dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({ Items: [] });
         await expect(loadTimes()).resolves.toEqual({});
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('fails with too much data', async () => {
         dynamodb.DynamoDB.prototype.scan.mockReturnValueOnce({ LastEvaluatedKey: 'key' });
         await expect(loadTimes()).rejects.toMatchObject({ message: expect.stringMatching(/^Too many records/) });
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with one data point', async () => {
@@ -57,7 +57,7 @@ describe('getData', () => {
             1848: { 42: { 'dEdOjOzEf': { 2: [975318642] } } }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two years', async () => {
@@ -84,7 +84,7 @@ describe('getData', () => {
             1843: { 42: { 'dEdOjOzEf': { 2: [975318642] } } }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two days in one year', async () => {
@@ -113,7 +113,7 @@ describe('getData', () => {
             }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two people in one day', async () => {
@@ -144,7 +144,7 @@ describe('getData', () => {
             }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two parts for one person', async () => {
@@ -170,7 +170,7 @@ describe('getData', () => {
             1848: { 42: { 'dEdOjOzEf': { 1: [951840], 2: [975318642] } } }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('works with two times for one part', async () => {
@@ -196,7 +196,7 @@ describe('getData', () => {
             1848: { 42: { 'dEdOjOzEf': { 2: [951840, 975318642] } } }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 
     test('correctly sorts timestamps', async () => {
@@ -222,6 +222,6 @@ describe('getData', () => {
             1848: { 42: { 'dEdOjOzEf': { 1: [981840, 975318642] } } }
         });
 
-        expect(dynamodb.DynamoDB.prototype.scan).toBeCalledWith({ TableName: 'aoc-redirect' });
+        expect(dynamodb.DynamoDB.prototype.scan).toHaveBeenCalledWith({ TableName: 'aoc-redirect' });
     });
 });
