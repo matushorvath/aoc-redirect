@@ -89,7 +89,7 @@ describe('GET /{year}/day/{day}', () => {
         };
         await expect(handler(event)).resolves.toMatchObject({ statusCode: 201 });
 
-        expect(times.saveTime).toBeCalledWith('1848', '42', part, 'dEdOjOzEf', expect.any(Number));
+        expect(times.saveTime).toHaveBeenCalledWith('1848', '42', part, 'dEdOjOzEf', expect.any(Number));
     });
 });
 
@@ -100,7 +100,7 @@ describe('GET /data', () => {
         const event = { resource: '/data', httpMethod: 'GET' };
         await expect(handler(event)).resolves.toMatchObject({ statusCode: 200, body: '{"sOmEdAtA":true}' });
 
-        expect(times.loadTimes).toBeCalledWith();
+        expect(times.loadTimes).toHaveBeenCalledWith();
     });
 
     test('returns a json that will be shortened in log', async () => {
@@ -110,6 +110,6 @@ describe('GET /data', () => {
         const event = { resource: '/data', httpMethod: 'GET' };
         await expect(handler(event)).resolves.toMatchObject({ statusCode: 200, body: JSON.stringify(json) });
 
-        expect(times.loadTimes).toBeCalledWith();
+        expect(times.loadTimes).toHaveBeenCalledWith();
     });
 });
