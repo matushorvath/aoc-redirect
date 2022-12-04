@@ -1,3 +1,6 @@
 coverage/
 node_modules/
 aoc-redirect-*.zip
+items-old.json
+items-new.json
+items-del.json
